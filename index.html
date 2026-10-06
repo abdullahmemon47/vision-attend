@@ -247,7 +247,7 @@
         <div>
           <h1 class="font-bold text-lg tracking-tight text-white flex items-center gap-2">
             VisionAttend AI
-            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">v3.4 Secure</span>
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">v3.6 Live</span>
           </h1>
           <p class="text-xs text-slate-400">Smart Face Recognition, Google Sheets & Firebase Sync</p>
         </div>
@@ -424,8 +424,9 @@
                           class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-500 font-mono focus:outline-none cursor-not-allowed">••••••••••••••••</textarea>
               </div>
               <div class="flex gap-2">
-                <button onclick="requestLinkPasscode('firebase')" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-lock text-amber-200 text-xs"></i> View / Edit Firebase Config
+                <button id="btnSaveFirebase" onclick="requestLinkPasscode('firebase')" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-lock text-amber-200 text-xs" id="iconLockFirebase"></i>
+                  <span id="labelSaveFirebase">View / Edit Firebase Config</span>
                 </button>
               </div>
             </div>
@@ -452,8 +453,9 @@
               </div>
 
               <div class="flex gap-2">
-                <button onclick="requestLinkPasscode('sheets')" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
-                  <i class="fa-solid fa-lock text-emerald-200 text-xs"></i> View / Edit Sheets Link
+                <button id="btnSaveSheets" onclick="requestLinkPasscode('sheets')" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-lock text-emerald-200 text-xs" id="iconLockSheets"></i>
+                  <span id="labelSaveSheets">View / Edit Sheets Link</span>
                 </button>
               </div>
             </div>
@@ -599,14 +601,27 @@
     const MASTER_CHANGE_PASSWORD_CODE = 'QWERTYUIOP';
     const LINK_SECURITY_PASSCODE = '786110';
 
+    // BUILT-IN FALLBACK DEFAULTS (PERMANENT CROSS-DEVICE CONNECTION)
+    const DEFAULT_GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbyNNsdHdMxDLNMI15Isl-cmOm/exec";
+    const DEFAULT_FIREBASE_CONFIG = {
+      "apiKey": "AIzaSyDk1HXOj_BGNGXzxtbRZVVOzI8d51Nwyb4",
+      "authDomain": "vision-attend.firebaseapp.com",
+      "databaseURL": "https://vision-attend-default-rtdb.firebaseio.com",
+      "projectId": "vision-attend",
+      "storageBucket": "vision-attend.firebasestorage.app",
+      "messagingSenderId": "838511189695",
+      "appId": "1:838511189695:web:8b4e77f55206bf6672f00a",
+      "measurementId": "G-BHR5MPSHDB"
+    };
+
     let currentRole = 'student';
     let isAdminUnlocked = false;
     let isFirebaseUnlocked = false;
     let isSheetsUnlocked = false;
     let currentAdminPassword = localStorage.getItem('visionattend_admin_password') || 'CHATGPT';
 
-    let googleSheetsUrl = localStorage.getItem('visionattend_sheets_url') || '';
-    let firebaseConfig = JSON.parse(localStorage.getItem('visionattend_firebase_config')) || null;
+    let googleSheetsUrl = localStorage.getItem('visionattend_sheets_url') || DEFAULT_GOOGLE_SHEETS_URL;
+    let firebaseConfig = JSON.parse(localStorage.getItem('visionattend_firebase_config')) || DEFAULT_FIREBASE_CONFIG;
     let firebaseDb = null;
     let pendingLinkSaveType = null;
 
@@ -681,20 +696,33 @@
         const fbInput = document.getElementById('firebaseConfigInput');
         fbInput.disabled = false;
         fbInput.readOnly = false;
+        fbInput.removeAttribute('disabled');
+        fbInput.removeAttribute('readonly');
         fbInput.classList.remove('text-slate-500', 'cursor-not-allowed');
-        fbInput.classList.add('text-white');
-        fbInput.value = firebaseConfig ? JSON.stringify(firebaseConfig) : '';
-        showNotification('success', 'Unlocked', 'Firebase configuration unlocked.');
+        fbInput.classList.add('text-white', 'bg-slate-900');
+        fbInput.value = JSON.stringify(firebaseConfig, null, 2);
+        
+        document.getElementById('iconLockFirebase').className = 'fa-solid fa-floppy-disk text-amber-200 text-xs';
+        document.getElementById('labelSaveFirebase').textContent = 'Save Firebase Config';
+        fbInput.focus();
+        showNotification('success', 'Unlocked', 'You can now edit and save Firebase Config.');
+
       } else if (pendingLinkSaveType === 'sheets') {
         isSheetsUnlocked = true;
         const sheetsInput = document.getElementById('googleScriptUrlInput');
-        sheetsInput.type = 'url';
+        sheetsInput.type = 'text';
         sheetsInput.disabled = false;
         sheetsInput.readOnly = false;
+        sheetsInput.removeAttribute('disabled');
+        sheetsInput.removeAttribute('readonly');
         sheetsInput.classList.remove('text-slate-500', 'cursor-not-allowed');
-        sheetsInput.classList.add('text-white');
+        sheetsInput.classList.add('text-white', 'bg-slate-900');
         sheetsInput.value = googleSheetsUrl;
-        showNotification('success', 'Unlocked', 'Google Sheets link unlocked.');
+        
+        document.getElementById('iconLockSheets').className = 'fa-solid fa-floppy-disk text-emerald-200 text-xs';
+        document.getElementById('labelSaveSheets').textContent = 'Save Sheets Link';
+        sheetsInput.focus();
+        showNotification('success', 'Unlocked', 'You can now edit and save Google Sheets Link.');
       }
     }
 
@@ -800,6 +828,8 @@
       fbInput.readOnly = true;
       fbInput.value = '••••••••••••••••';
       fbInput.className = "w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-500 font-mono focus:outline-none cursor-not-allowed";
+      document.getElementById('iconLockFirebase').className = 'fa-solid fa-lock text-amber-200 text-xs';
+      document.getElementById('labelSaveFirebase').textContent = 'View / Edit Firebase Config';
 
       const sheetsInput = document.getElementById('googleScriptUrlInput');
       sheetsInput.type = 'password';
@@ -807,6 +837,8 @@
       sheetsInput.readOnly = true;
       sheetsInput.value = '••••••••••••••••';
       sheetsInput.className = "w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-500 focus:outline-none cursor-not-allowed";
+      document.getElementById('iconLockSheets').className = 'fa-solid fa-lock text-emerald-200 text-xs';
+      document.getElementById('labelSaveSheets').textContent = 'View / Edit Sheets Link';
 
       switchRole('student');
       showNotification('info', 'Admin Access Locked', 'Admin settings are now locked.');
